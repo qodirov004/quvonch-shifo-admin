@@ -92,14 +92,14 @@ export default function LoginPage() {
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl">Quvonch Shifo Admin</CardTitle>
           <CardDescription>Superuser login required</CardDescription>
-          <div className="text-xs text-muted-foreground bg-muted p-2 rounded space-y-1">
+          {/* <div className="text-xs text-muted-foreground bg-muted p-2 rounded space-y-1">
             <p>Default credentials: admin / admin</p>
             <p>API server: https://api.greentraver.uz</p>
             <div className="flex items-center gap-1">
               <CheckCircle className="w-3 h-3 text-green-500" />
               <span className="text-green-600">API online</span>
             </div>
-          </div>
+          </div> */}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -156,7 +156,7 @@ export default function LoginPage() {
               >
                 {loading ? "Logging in..." : "Login"}
               </Button>
-              <Button
+              {/* <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
@@ -166,7 +166,7 @@ export default function LoginPage() {
                 className="px-3"
               >
                 Fill Default
-              </Button>
+              </Button> */}
             </div>
           </form>
         </CardContent>
