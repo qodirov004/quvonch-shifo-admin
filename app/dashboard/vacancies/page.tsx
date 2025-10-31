@@ -13,10 +13,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Trash2, Search, Plus, Edit, Eye, Power, PowerOff, X } from "lucide-react"
 import { Modal } from "@/components/ui/modal"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DashboardLayout from "@/components/dashboard/layout"
 import { NoSSR } from "@/components/ui/no-ssr"
 import { api } from "@/lib/api-services"
-import type { VakansiyaLanguage, Vakansiya } from "@/lib/types"
+import type { VakansiyaLanguage, Vakansiya, CategoryLanguage, WorkTypeLanguage } from "@/lib/types"
 
 export default function VacanciesPage() {
   const router = useRouter()
@@ -42,10 +43,42 @@ export default function VacanciesPage() {
     description_ru: "",
     requirements_uz: "",
     requirements_ru: "",
-    salary: "",
+    expiring_date: "",
+    category: undefined,
+    work_type: undefined,
     is_active: false
   })
   const [formLoading, setFormLoading] = useState(false)
+  const [categories, setCategories] = useState<CategoryLanguage[]>([])
+  const [workTypes, setWorkTypes] = useState<WorkTypeLanguage[]>([])
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return ""
+    // Prefer parsing plain YYYY-MM-DD to avoid TZ shifts
+    const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (m) {
+      const [_, y, mo, d] = m
+      return `${d}.${mo}.${y}`
+    }
+    const dte = new Date(dateStr)
+    if (isNaN(dte.getTime())) return dateStr
+    const d = String(dte.getDate()).padStart(2, '0')
+    const mth = String(dte.getMonth() + 1).padStart(2, '0')
+    const y = dte.getFullYear()
+    return `${d}.${mth}.${y}`
+  }
+
+  const getCategoryName = (id?: number) => {
+    if (!id) return ""
+    const found = categories.find(c => c.id === id)
+    return found?.name_uz || found?.name || String(id)
+  }
+
+  const getWorkTypeName = (id?: number) => {
+    if (!id) return ""
+    const found = workTypes.find(w => w.id === id)
+    return found?.name_uz || found?.name || String(id)
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -60,6 +93,7 @@ export default function VacanciesPage() {
   useEffect(() => {
     if (token && isAuthenticated) {
       fetchVacancies()
+      fetchMeta()
     }
   }, [token, isAuthenticated])
 
@@ -67,8 +101,7 @@ export default function VacanciesPage() {
     const filtered = vacancies.filter(
       (vacancy) =>
         (vacancy.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (vacancy.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (vacancy.salary || "").toLowerCase().includes(searchTerm.toLowerCase()),
+        (vacancy.description || "").toLowerCase().includes(searchTerm.toLowerCase()),
     )
     setFilteredVacancies(filtered)
   }, [searchTerm, vacancies])
@@ -85,6 +118,19 @@ export default function VacanciesPage() {
       setVacancies([])
     } finally {
       setPageLoading(false)
+    }
+  }
+
+  const fetchMeta = async () => {
+    try {
+      const [cats, wts] = await Promise.all([
+        api.categories.getAll({ page: 1 }),
+        api.workTypes.getAll({ page: 1 }),
+      ])
+      setCategories(cats.results || [])
+      setWorkTypes(wts.results || [])
+    } catch (e) {
+      console.error('Failed to fetch categories/work types', e)
     }
   }
 
@@ -133,7 +179,15 @@ export default function VacanciesPage() {
 
   const handleCreate = async () => {
     if (!formData.title_uz || !formData.title_ru || !formData.description_uz || !formData.description_ru) {
-      alert("Please fill in all required fields")
+      alert("Iltimos, majburiy maydonlarni to'ldiring")
+      return
+    }
+    if (!formData.expiring_date) {
+      alert("Yakunlanish sanasi majburiy")
+      return
+    }
+    if (!formData.category || !formData.work_type) {
+      alert("Kategoriya va Ish turini tanlang")
       return
     }
 
@@ -147,7 +201,9 @@ export default function VacanciesPage() {
         description_ru: formData.description_ru!,
         requirements_uz: formData.requirements_uz || "",
         requirements_ru: formData.requirements_ru || "",
-        salary: formData.salary || "",
+        expiring_date: formData.expiring_date!,
+        category: formData.category!,
+        work_type: formData.work_type!,
         is_active: formData.is_active || false
       }
       
@@ -158,7 +214,7 @@ export default function VacanciesPage() {
       resetForm()
     } catch (error) {
       console.error("Failed to create vacancy:", error)
-      alert("Failed to create vacancy. Please try again.")
+      alert("Vakansiya yaratishda xatolik. Qayta urinib ko'ring.")
     } finally {
       setFormLoading(false)
     }
@@ -166,7 +222,15 @@ export default function VacanciesPage() {
 
   const handleEdit = async () => {
     if (!selectedVacancy || !formData.title_uz || !formData.title_ru || !formData.description_uz || !formData.description_ru) {
-      alert("Please fill in all required fields")
+      alert("Iltimos, majburiy maydonlarni to'ldiring")
+      return
+    }
+    if (!formData.expiring_date) {
+      alert("Yakunlanish sanasi majburiy")
+      return
+    }
+    if (!formData.category || !formData.work_type) {
+      alert("Kategoriya va Ish turini tanlang")
       return
     }
 
@@ -180,7 +244,9 @@ export default function VacanciesPage() {
         description_ru: formData.description_ru!,
         requirements_uz: formData.requirements_uz || "",
         requirements_ru: formData.requirements_ru || "",
-        salary: formData.salary || "",
+        expiring_date: formData.expiring_date!,
+        category: formData.category!,
+        work_type: formData.work_type!,
         is_active: formData.is_active || false
       }
       
@@ -192,7 +258,7 @@ export default function VacanciesPage() {
       resetForm()
     } catch (error) {
       console.error("Failed to update vacancy:", error)
-      alert("Failed to update vacancy. Please try again.")
+      alert("Vakansiyani yangilashda xatolik. Qayta urinib ko'ring.")
     } finally {
       setFormLoading(false)
     }
@@ -206,7 +272,9 @@ export default function VacanciesPage() {
       description_ru: "",
       requirements_uz: "",
       requirements_ru: "",
-      salary: "",
+      expiring_date: "",
+      category: undefined,
+      work_type: undefined,
       is_active: false
     })
   }
@@ -220,7 +288,9 @@ export default function VacanciesPage() {
       description_ru: vacancy.description_ru || "",
       requirements_uz: vacancy.requirements_uz || "",
       requirements_ru: vacancy.requirements_ru || "",
-      salary: vacancy.salary || "",
+      expiring_date: (vacancy as any).expiring_date || "",
+      category: (vacancy as any).category || undefined,
+      work_type: (vacancy as any).work_type || (vacancy as any).working_type || undefined,
       is_active: vacancy.is_active
     })
     setIsEditModalOpen(true)
@@ -385,14 +455,49 @@ export default function VacanciesPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="salary">Maosh</Label>
-                <Input
-                  id="salary"
-                  value={formData.salary}
-                  onChange={(e) => setFormData({...formData, salary: e.target.value})}
-                  placeholder="Maosh miqdori"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="category">Kategoriya</Label>
+                  <Select
+                    value={formData.category ? String(formData.category) : undefined}
+                    onValueChange={(val) => setFormData({ ...formData, category: parseInt(val) })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Kategoriyani tanlang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>{c.name_uz}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="working_type">Ish turi</Label>
+                  <Select
+                    value={formData.work_type ? String(formData.work_type) : undefined}
+                    onValueChange={(val) => setFormData({ ...formData, work_type: parseInt(val) })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Ish turini tanlang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workTypes.map((w) => (
+                        <SelectItem key={w.id} value={String(w.id)}>{w.name_uz}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="expiring_date">Yakunlanish sanasi</Label>
+                  <Input
+                    id="expiring_date"
+                    type="date"
+                    value={formData.expiring_date || ""}
+                    onChange={(e) => setFormData({ ...formData, expiring_date: e.target.value })}
+                    placeholder="YYYY-MM-DD"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -436,7 +541,7 @@ export default function VacanciesPage() {
                         <h3 className="font-semibold text-foreground text-sm sm:text-base line-clamp-2">{vacancy.title}</h3>
                         <p className="text-muted-foreground text-xs sm:text-sm mt-1 line-clamp-2">{vacancy.description}</p>
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2 text-xs text-muted-foreground">
-                          <span>Maosh: {vacancy.salary}</span>
+                          <span>Yakunlanish: {formatDate((vacancy as any).expiring_date) || '-'}</span>
                           <span className={`px-2 py-1 rounded-full text-xs w-fit ${
                             vacancy.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                           }`}>
@@ -671,14 +776,25 @@ export default function VacanciesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Maosh</Label>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedVacancy.salary || "Kiritilmagan"}</p>
+                  <Label>Yakunlanish sanasi</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{formatDate((selectedVacancy as any).expiring_date) || "Kiritilmagan"}</p>
                 </div>
                 <div>
                   <Label>Holat</Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     {selectedVacancy.is_active ? 'Faol' : 'Nofaol'}
                   </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Kategoriya</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{getCategoryName((selectedVacancy as any).category)}</p>
+                </div>
+                <div>
+                  <Label>Ish turi</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{getWorkTypeName((selectedVacancy as any).work_type || (selectedVacancy as any).working_type)}</p>
                 </div>
               </div>
 

@@ -10,11 +10,20 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
     headers["Authorization"] = `Bearer ${token}`
   }
 
-  const response = await fetch(`https://api.greentraver.uz${endpoint}`, {
-    ...options,
-    headers,
-    cache: 'no-store',
-  })
+  let response: Response
+  try {
+    response = await fetch(`https://api.greentraver.uz${endpoint}`, {
+      ...options,
+      headers,
+      cache: 'no-store',
+      mode: 'cors',
+      redirect: 'follow',
+      credentials: 'omit',
+    })
+  } catch (err: any) {
+    const message = err?.message || 'Unknown network error'
+    throw new Error(`Network error calling ${endpoint}: ${message}`)
+  }
 
   if (response.status === 401) {
     // Clear auth and redirect to login
@@ -33,11 +42,22 @@ export async function apiGet(endpoint: string) {
     const response = await apiCall(endpoint, { method: "GET" })
     if (!response.ok) {
       console.warn(`API error: ${response.status} for ${endpoint}`)
-      throw new Error(`API error: ${response.status}`)
+      const text = await response.text().catch(() => '')
+      throw new Error(`API error: ${response.status}${text ? ` - ${text}` : ''}`)
     }
     return response.json()
-  } catch (error) {
+  } catch (error: any) {
     console.error(`API call failed for ${endpoint}:`, error)
+    const msg = String(error?.message || '')
+    const isTransient = msg.includes('Failed to fetch') || msg.includes('Network error')
+    if (isTransient) {
+      const retry = await apiCall(endpoint, { method: "GET" })
+      if (!retry.ok) {
+        const text = await retry.text().catch(() => '')
+        throw new Error(`API error: ${retry.status}${text ? ` - ${text}` : ''}`)
+      }
+      return retry.json()
+    }
     throw error
   }
 }

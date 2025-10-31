@@ -76,7 +76,11 @@ export interface Vakansiya {
   description_ru: string;
   requirements_uz: string;
   requirements_ru: string;
-  salary?: string;
+  salary?: string; // backward compatibility
+  expiring_date?: string; // ISO date (YYYY-MM-DD)
+  category?: number; // FK id
+  working_type?: number; // legacy naming in some UIs
+  work_type?: number; // FK id expected by backend
   is_active?: boolean;
   created_at?: string;
 }

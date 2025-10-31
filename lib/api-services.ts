@@ -285,14 +285,56 @@ export const vacanciesApi = {
     page?: number;
     lang?: Language;
   }): Promise<PaginatedResponse<VakansiyaLanguage>> => {
-    const searchParams = new URLSearchParams();
-    if (params?.search) searchParams.append('search', params.search);
-    if (params?.ordering) searchParams.append('ordering', params.ordering);
-    if (params?.page) searchParams.append('page', params.page.toString());
-    if (params?.lang) searchParams.append('lang', params.lang);
-    
-    const query = searchParams.toString();
-    return apiGet(`/vakansiyalar/${query ? `?${query}` : ''}`);
+    const buildQuery = (includeLang: boolean) => {
+      const sp = new URLSearchParams();
+      if (params?.search) sp.append('search', params.search);
+      if (params?.ordering) sp.append('ordering', params.ordering);
+      if (params?.page) sp.append('page', params.page.toString());
+      if (includeLang && params?.lang) sp.append('lang', params.lang);
+      return sp.toString();
+    };
+
+    // Prefer stable home data first to avoid known backend bug on /vakansiyalar/
+    try {
+      const home = await homeApi.getHomeData(params?.lang ?? 'uz');
+      return {
+        count: home.vacancies?.length ?? 0,
+        next: undefined,
+        previous: undefined,
+        results: home.vacancies ?? [],
+      } as PaginatedResponse<VakansiyaLanguage>;
+    } catch {}
+
+    // Try primary endpoint with lang
+    try {
+      const query = buildQuery(true);
+      return await apiGet(`/vakansiyalar/${query ? `?${query}` : ''}`);
+    } catch (e1) {
+      // Retry without lang param
+      try {
+        const queryNoLang = buildQuery(false);
+        return await apiGet(`/vakansiyalar/${queryNoLang ? `?${queryNoLang}` : ''}`);
+      } catch (e2) {
+        // Try alternative endpoints (possible backend naming variants)
+        const queryFallback = buildQuery(false);
+        try {
+          return await apiGet(`/vacancies/${queryFallback ? `?${queryFallback}` : ''}`);
+        } catch (e3) {
+          try {
+            return await apiGet(`/vakansiya/${queryFallback ? `?${queryFallback}` : ''}`);
+          } catch (e4) {
+            // Final fallback: use home endpoint, which often includes vacancies
+            const home = await homeApi.getHomeData(params?.lang ?? 'uz');
+            return {
+              count: home.vacancies?.length ?? 0,
+              next: undefined,
+              previous: undefined,
+              results: home.vacancies ?? [],
+            } as PaginatedResponse<VakansiyaLanguage>;
+          }
+        }
+      }
+    }
   },
 
   // Get single vacancy
