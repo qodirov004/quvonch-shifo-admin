@@ -175,3 +175,35 @@ export interface AboutUsLanguage {
   created_at: string;
   updated_at: string;
 }
+
+// Category
+export interface Category {
+  id?: number;
+  name_uz: string;
+  name_ru: string;
+  created_at?: string;
+}
+
+export interface CategoryLanguage {
+  id: number;
+  name: string;
+  name_uz: string;
+  name_ru: string;
+  created_at?: string;
+}
+
+// Work Type
+export interface WorkType {
+  id?: number;
+  name_uz: string;
+  name_ru: string;
+  created_at?: string;
+}
+
+export interface WorkTypeLanguage {
+  id: number;
+  name: string;
+  name_uz: string;
+  name_ru: string;
+  created_at?: string;
+}

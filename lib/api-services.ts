@@ -16,7 +16,11 @@ import type {
   LoginRequest,
   LoginResponse,
   AboutUs,
-  AboutUsLanguage
+  AboutUsLanguage,
+  Category,
+  CategoryLanguage,
+  WorkType,
+  WorkTypeLanguage
 } from './types';
 
 // API Base URL
@@ -433,6 +437,196 @@ export const aboutUsApi = {
   },
 };
 
+// Categories API
+export const categoriesApi = {
+  getAll: async (params?: {
+    search?: string;
+    ordering?: string;
+    page?: number;
+    lang?: Language;
+  }): Promise<PaginatedResponse<CategoryLanguage>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.ordering) searchParams.append('ordering', params.ordering);
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.lang) searchParams.append('lang', params.lang);
+
+    const query = searchParams.toString();
+    try {
+      return await apiGet(`/categories/${query ? `?${query}` : ''}`);
+    } catch (e) {
+      return apiGet(`/category/${query ? `?${query}` : ''}`);
+    }
+  },
+
+  getById: async (id: number): Promise<CategoryLanguage> => {
+    try {
+      return await apiGet(`/categories/${id}/`);
+    } catch (e) {
+      return apiGet(`/category/${id}/`);
+    }
+  },
+
+  create: async (data: Category): Promise<Category> => {
+    try {
+      return await apiPost('/categories/', data);
+    } catch (e) {
+      return apiPost('/category/', data);
+    }
+  },
+
+  update: async (id: number, data: Category): Promise<Category> => {
+    let response = await apiCall(`/categories/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/category/${id}/`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    }
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  partialUpdate: async (id: number, data: Partial<Category>): Promise<Category> => {
+    let response = await apiCall(`/categories/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/category/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    }
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  delete: async (id: number): Promise<void> => {
+    let response = await apiCall(`/categories/${id}/`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/category/${id}/`, {
+        method: 'DELETE',
+      });
+    }
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+  },
+};
+
+// Work Types API
+export const workTypesApi = {
+  getAll: async (params?: {
+    search?: string;
+    ordering?: string;
+    page?: number;
+    lang?: Language;
+  }): Promise<PaginatedResponse<WorkTypeLanguage>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.ordering) searchParams.append('ordering', params.ordering);
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.lang) searchParams.append('lang', params.lang);
+
+    const query = searchParams.toString();
+    try {
+      return await apiGet(`/work-types/${query ? `?${query}` : ''}`);
+    } catch (e) {
+      try {
+        return await apiGet(`/worktypes/${query ? `?${query}` : ''}`);
+      } catch (e2) {
+        return apiGet(`/worktype/${query ? `?${query}` : ''}`);
+      }
+    }
+  },
+
+  getById: async (id: number): Promise<WorkTypeLanguage> => {
+    try {
+      return await apiGet(`/work-types/${id}/`);
+    } catch (e) {
+      try {
+        return await apiGet(`/worktypes/${id}/`);
+      } catch (e2) {
+        return apiGet(`/worktype/${id}/`);
+      }
+    }
+  },
+
+  create: async (data: WorkType): Promise<WorkType> => {
+    try {
+      return await apiPost('/work-types/', data);
+    } catch (e) {
+      try {
+        return await apiPost('/worktypes/', data);
+      } catch (e2) {
+        return apiPost('/worktype/', data);
+      }
+    }
+  },
+
+  update: async (id: number, data: WorkType): Promise<WorkType> => {
+    let response = await apiCall(`/work-types/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/worktypes/${id}/`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    }
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/worktype/${id}/`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    }
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  partialUpdate: async (id: number, data: Partial<WorkType>): Promise<WorkType> => {
+    let response = await apiCall(`/work-types/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/worktypes/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    }
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/worktype/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    }
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  delete: async (id: number): Promise<void> => {
+    let response = await apiCall(`/work-types/${id}/`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/worktypes/${id}/`, {
+        method: 'DELETE',
+      });
+    }
+    if (!response.ok && response.status === 404) {
+      response = await apiCall(`/worktype/${id}/`, {
+        method: 'DELETE',
+      });
+    }
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+  },
+};
 // Home/Overview API
 export const homeApi = {
   // Get all home data
@@ -497,4 +691,6 @@ export const api = {
   jobApplications: jobApplicationsApi,
   home: homeApi,
   aboutUs: aboutUsApi,
+  categories: categoriesApi,
+  workTypes: workTypesApi,
 };

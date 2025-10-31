@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Phone, Users, Newspaper, Briefcase, LayoutDashboard, FileText, Info } from "lucide-react"
+import { Phone, Users, Newspaper, Briefcase, LayoutDashboard, FileText, Info, Tag, Wrench } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -10,6 +10,8 @@ const menuItems = [
   { href: "/dashboard/doctors", label: "Shifokorlar", icon: "users" },
   { href: "/dashboard/news", label: "Yangiliklar", icon: "newspaper" },
   { href: "/dashboard/vacancies", label: "Vakansiyalar", icon: "briefcase" },
+  { href: "/dashboard/categories", label: "Kategoriyalar", icon: "tag" },
+  { href: "/dashboard/work-types", label: "Ish turlari", icon: "wrench" },
   { href: "/dashboard/job-applications", label: "Ish arizalari", icon: "file-text" },
   { href: "/dashboard/aboutus", label: "Biz haqimizda", icon: "info" },
 ]
@@ -35,6 +37,10 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose?
         return <FileText size={20} />
       case "info":
         return <Info size={20} />
+      case "tag":
+        return <Tag size={20} />
+      case "wrench":
+        return <Wrench size={20} />
       default:
         return null
     }
