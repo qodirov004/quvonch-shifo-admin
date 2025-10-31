@@ -692,14 +692,58 @@ export default function VacanciesPage() {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="edit_salary">Maosh</Label>
-              <Input
-                id="edit_salary"
-                value={formData.salary}
-                onChange={(e) => setFormData({...formData, salary: e.target.value})}
-                placeholder="Maosh miqdori"
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="edit_category">Kategoriya</Label>
+                <Select
+                  value={formData.category ? String(formData.category) : undefined}
+                  onValueChange={(val) => setFormData({ ...formData, category: parseInt(val) })}
+                >
+                  <SelectTrigger className="w-full" id="edit_category">
+                    <SelectValue placeholder="Kategoriyani tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>{c.name_uz}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit_working_type">Ish turi</Label>
+                <Select
+                  value={formData.work_type ? String(formData.work_type) : undefined}
+                  onValueChange={(val) => setFormData({ ...formData, work_type: parseInt(val) })}
+                >
+                  <SelectTrigger className="w-full" id="edit_working_type">
+                    <SelectValue placeholder="Ish turini tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workTypes.map((w) => (
+                      <SelectItem key={w.id} value={String(w.id)}>{w.name_uz}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit_expiring_date">Yakunlanish sanasi</Label>
+                <Input
+                  id="edit_expiring_date"
+                  type="date"
+                  value={formData.expiring_date || ""}
+                  onChange={(e) => setFormData({ ...formData, expiring_date: e.target.value })}
+                  placeholder="YYYY-MM-DD"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="edit_is_active"
+                checked={!!formData.is_active}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: !!checked })}
               />
+              <Label htmlFor="edit_is_active">Faol</Label>
             </div>
 
             <div className="flex gap-2 justify-end">
