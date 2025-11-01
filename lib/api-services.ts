@@ -294,17 +294,6 @@ export const vacanciesApi = {
       return sp.toString();
     };
 
-    // Prefer stable home data first to avoid known backend bug on /vakansiyalar/
-    try {
-      const home = await homeApi.getHomeData(params?.lang ?? 'uz');
-      return {
-        count: home.vacancies?.length ?? 0,
-        next: undefined,
-        previous: undefined,
-        results: home.vacancies ?? [],
-      } as PaginatedResponse<VakansiyaLanguage>;
-    } catch {}
-
     // Try primary endpoint with lang
     try {
       const query = buildQuery(true);
@@ -323,13 +312,12 @@ export const vacanciesApi = {
           try {
             return await apiGet(`/vakansiya/${queryFallback ? `?${queryFallback}` : ''}`);
           } catch (e4) {
-            // Final fallback: use home endpoint, which often includes vacancies
-            const home = await homeApi.getHomeData(params?.lang ?? 'uz');
+            // All endpoints failed, return empty result
             return {
-              count: home.vacancies?.length ?? 0,
+              count: 0,
               next: undefined,
               previous: undefined,
-              results: home.vacancies ?? [],
+              results: [],
             } as PaginatedResponse<VakansiyaLanguage>;
           }
         }

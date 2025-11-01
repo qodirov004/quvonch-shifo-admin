@@ -349,32 +349,24 @@ export default function DashboardOverview() {
       value: stats.callOrders,
       icon: Phone,
       color: "from-blue-500 to-blue-600",
-      change: "+12%",
-      trend: "up",
     },
     {
       label: "Shifokorlar",
       value: stats.doctors,
       icon: Users,
       color: "from-green-500 to-green-600",
-      change: "+8%",
-      trend: "up",
     },
     {
       label: "Yangiliklar",
       value: stats.news,
       icon: Newspaper,
       color: "from-purple-500 to-purple-600",
-      change: "+5%",
-      trend: "up",
     },
     {
       label: "Vakansiyalar",
       value: stats.vacancies,
       icon: Briefcase,
       color: "from-orange-500 to-orange-600",
-      change: "-2%",
-      trend: "down",
     },
   ]
 
@@ -472,14 +464,7 @@ export default function DashboardOverview() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-3xl font-bold text-foreground">{loading ? "..." : stat.value}</div>
-                  <div
-                    className={`flex items-center gap-1 text-sm font-medium ${stat.trend === "up" ? "text-green-600" : "text-red-600"
-                      }`}
-                  >
-                    {stat.trend === "up" ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                    {stat.change}
-                  </div>
+                  <div className="text-3xl font-bold text-foreground">{loading ? "..." : stat.value} ta</div>
                 </div>
               </CardContent>
             </Card>
