@@ -296,35 +296,40 @@ export const vacanciesApi = {
       return sp.toString();
     };
 
-    // Try primary endpoint with lang
-    try {
-      const query = buildQuery(true);
-      return await apiGet(`/vakansiyalar/${query ? `?${query}` : ''}`);
-    } catch (e1) {
-      // Retry without lang param
+    // Non-throwing fetch helper to avoid noisy console errors for known-broken endpoints
+    const tryGetJson = async (path: string): Promise<PaginatedResponse<VakansiyaLanguage> | null> => {
       try {
-        const queryNoLang = buildQuery(false);
-        return await apiGet(`/vakansiyalar/${queryNoLang ? `?${queryNoLang}` : ''}`);
-      } catch (e2) {
-        // Try alternative endpoints (possible backend naming variants)
-        const queryFallback = buildQuery(false);
-        try {
-          return await apiGet(`/vacancies/${queryFallback ? `?${queryFallback}` : ''}`);
-        } catch (e3) {
-          try {
-            return await apiGet(`/vakansiya/${queryFallback ? `?${queryFallback}` : ''}`);
-          } catch (e4) {
-            // All endpoints failed, return empty result
-            return {
-              count: 0,
-              next: undefined,
-              previous: undefined,
-              results: [],
-            } as PaginatedResponse<VakansiyaLanguage>;
-          }
-        }
+        const res = await apiCall(path, { method: 'GET' });
+        if (!res.ok) return null; // swallow 4xx/5xx
+        return res.json();
+      } catch {
+        return null;
       }
+    };
+
+    // Try primary, then fallbacks
+    const queryWithLang = buildQuery(true);
+    const queryNoLang = buildQuery(false);
+
+    const endpoints = [
+      `/vakansiyalar/${queryWithLang ? `?${queryWithLang}` : ''}`,
+      `/vakansiyalar/${queryNoLang ? `?${queryNoLang}` : ''}`,
+      `/vacancies/${queryNoLang ? `?${queryNoLang}` : ''}`,
+      `/vakansiya/${queryNoLang ? `?${queryNoLang}` : ''}`,
+    ];
+
+    for (const ep of endpoints) {
+      const data = await tryGetJson(ep);
+      if (data) return data;
     }
+
+    // All failed: return empty-safe payload
+    return {
+      count: 0,
+      next: undefined,
+      previous: undefined,
+      results: [],
+    } as PaginatedResponse<VakansiyaLanguage>;
   },
 
   // Get single vacancy

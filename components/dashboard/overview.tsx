@@ -40,7 +40,10 @@ export default function DashboardOverview() {
           api.callOrders.getAll({ page: 1, lang: "uz" }),
           api.doctors.getAll({ page: 1, lang: "uz" }),
           api.news.getAll({ page: 1, lang: "uz" }),
-          api.vacancies.getAll({ page: 1, lang: "uz" }),
+          // Backend is returning 500 due to serializer misconfig; hard-fail safe here
+          api.vacancies
+            .getAll({ page: 1, lang: "uz" })
+            .catch(() => ({ count: 0, results: [] } as any)),
           api.jobApplications.getAll({ page: 1, lang: "uz" }),
         ])
 

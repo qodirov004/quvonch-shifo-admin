@@ -192,20 +192,39 @@ export default function ServicePricePage() {
     })
   }
 
-  const openEditModal = (servicePrice: ServicePriceLanguage) => {
-    setSelectedServicePrice(servicePrice)
-    setFormData({
-      name_uz: servicePrice.name_uz || "",
-      name_ru: servicePrice.name_ru || "",
-      price: servicePrice.price,
-      is_active: servicePrice.is_active
-    })
-    setIsEditModalOpen(true)
+  const openEditModal = async (servicePrice: ServicePriceLanguage) => {
+    try {
+      const detail = await api.servicePrice.getById(servicePrice.id)
+      setSelectedServicePrice(detail)
+      setFormData({
+        name_uz: (detail as any).name_uz || (detail as any).service_name_uz || "",
+        name_ru: (detail as any).name_ru || (detail as any).service_name_ru || "",
+        price: detail.price,
+        is_active: detail.is_active
+      })
+    } catch {
+      // Fallback to passed item if detail fails
+      setSelectedServicePrice(servicePrice)
+      setFormData({
+        name_uz: (servicePrice as any).name_uz || (servicePrice as any).service_name_uz || "",
+        name_ru: (servicePrice as any).name_ru || (servicePrice as any).service_name_ru || "",
+        price: servicePrice.price,
+        is_active: servicePrice.is_active
+      })
+    } finally {
+      setIsEditModalOpen(true)
+    }
   }
 
-  const openViewModal = (servicePrice: ServicePriceLanguage) => {
-    setSelectedServicePrice(servicePrice)
-    setIsViewModalOpen(true)
+  const openViewModal = async (servicePrice: ServicePriceLanguage) => {
+    try {
+      const detail = await api.servicePrice.getById(servicePrice.id)
+      setSelectedServicePrice(detail)
+    } catch {
+      setSelectedServicePrice(servicePrice)
+    } finally {
+      setIsViewModalOpen(true)
+    }
   }
 
   const openManageModal = async (doctor: DoctorLanguage) => {
@@ -393,7 +412,7 @@ export default function ServicePricePage() {
                   <div key={item.id} className="p-3 border rounded-lg flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-sm sm:text-base">{item.name}</h3>
+                        <h3 className="font-semibold text-sm sm:text-base">{(item as any).name_uz || (item as any).service_name_uz || (item as any).name_ru || (item as any).service_name_ru || (item as any).name}</h3>
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded w-fit flex items-center gap-1">
                           {item.price.toLocaleString('uz-UZ')} so'm
                         </span>
@@ -535,14 +554,14 @@ export default function ServicePricePage() {
                     <span className="text-sm font-medium text-blue-600">🇺🇿</span>
                     Nomi (O'zbek)
                   </Label>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedServicePrice.name_uz || selectedServicePrice.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{(selectedServicePrice as any).name_uz || (selectedServicePrice as any).service_name_uz || "Kiritilmagan"}</p>
                 </div>
                 <div>
                   <Label className="flex items-center gap-2">
                     <span className="text-sm font-medium text-red-600">🇷🇺</span>
                     Nomi (Rus)
                   </Label>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedServicePrice.name_ru || selectedServicePrice.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{(selectedServicePrice as any).name_ru || (selectedServicePrice as any).service_name_ru || "Не указано"}</p>
                 </div>
               </div>
               
@@ -569,12 +588,6 @@ export default function ServicePricePage() {
                 <div>
                   <Label>Narx</Label>
                   <p className="text-sm text-muted-foreground mt-1">{selectedServicePrice.price.toLocaleString('uz-UZ')} so'm</p>
-                </div>
-                <div>
-                  <Label>Holat</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedServicePrice.is_active ? 'Faol' : 'Nofaol'}
-                  </p>
                 </div>
               </div>
 
