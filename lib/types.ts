@@ -96,7 +96,6 @@ export interface VakansiyaLanguage {
   requirements: string;
   requirements_uz: string;
   requirements_ru: string;
-  salary?: string;
   is_active: boolean;
   created_at: string;
 }
@@ -210,4 +209,31 @@ export interface WorkTypeLanguage {
   name_uz: string;
   name_ru: string;
   created_at?: string;
+}
+
+// Service Price
+export interface ServicePrice {
+  id?: number;
+  name_uz: string;
+  name_ru: string;
+  description_uz?: string;
+  description_ru?: string;
+  price: number;
+  doctor?: number; // FK to Doctor
+  is_active?: boolean;
+  created_at?: string;
+}
+
+export interface ServicePriceLanguage {
+  id: number;
+  name: string;
+  name_uz: string;
+  name_ru: string;
+  description?: string;
+  description_uz?: string;
+  description_ru?: string;
+  price: number;
+  doctor?: number;
+  is_active: boolean;
+  created_at: string;
 }

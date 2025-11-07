@@ -20,7 +20,9 @@ import type {
   Category,
   CategoryLanguage,
   WorkType,
-  WorkTypeLanguage
+  WorkTypeLanguage,
+  ServicePrice,
+  ServicePriceLanguage
 } from './types';
 
 // API Base URL
@@ -657,6 +659,88 @@ export const workTypesApi = {
     if (!response.ok) throw new Error(`API error: ${response.status}`);
   },
 };
+
+// Service Price API
+export const servicePriceApi = {
+  // Get all service prices with pagination and search
+  getAll: async (params?: {
+    search?: string;
+    ordering?: string;
+    page?: number;
+    lang?: Language;
+    doctorId?: number;
+  }): Promise<PaginatedResponse<ServicePriceLanguage>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.ordering) searchParams.append('ordering', params.ordering);
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.lang) searchParams.append('lang', params.lang);
+    if (params?.doctorId) searchParams.append('doctor', String(params.doctorId));
+    
+    const query = searchParams.toString();
+    return apiGet(`/service-prices/${query ? `?${query}` : ''}`);
+  },
+
+  // Get single service price
+  getById: async (id: number): Promise<ServicePriceLanguage> => {
+    return apiGet(`/service-prices/${id}/`);
+  },
+
+  // Create new service price
+  create: async (data: ServicePrice): Promise<ServicePrice> => {
+    const payload: any = {
+      service_name_uz: (data as any).name_uz ?? (data as any).service_name_uz,
+      service_name_ru: (data as any).name_ru ?? (data as any).service_name_ru,
+      price: data.price,
+      doctor: (data as any).doctor,
+      is_active: typeof data.is_active === 'boolean' ? data.is_active : true,
+    };
+    return apiPost('/service-prices/', payload);
+  },
+
+  // Update service price
+  update: async (id: number, data: ServicePrice): Promise<ServicePrice> => {
+    const payload: any = {
+      service_name_uz: (data as any).name_uz ?? (data as any).service_name_uz,
+      service_name_ru: (data as any).name_ru ?? (data as any).service_name_ru,
+      price: data.price,
+      doctor: (data as any).doctor,
+      is_active: typeof data.is_active === 'boolean' ? data.is_active : true,
+    };
+    const response = await apiCall(`/service-prices/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  // Partial update service price
+  partialUpdate: async (id: number, data: Partial<ServicePrice>): Promise<ServicePrice> => {
+    const payload: any = {
+      ...(typeof (data as any).name_uz !== 'undefined' ? { service_name_uz: (data as any).name_uz } : {}),
+      ...(typeof (data as any).name_ru !== 'undefined' ? { service_name_ru: (data as any).name_ru } : {}),
+      ...(typeof data.price !== 'undefined' ? { price: data.price } : {}),
+      ...(typeof (data as any).doctor !== 'undefined' ? { doctor: (data as any).doctor } : {}),
+      ...(typeof data.is_active !== 'undefined' ? { is_active: data.is_active } : {}),
+    };
+    const response = await apiCall(`/service-prices/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  // Delete service price
+  delete: async (id: number): Promise<void> => {
+    const response = await apiCall(`/service-prices/${id}/`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+  },
+};
+
 // Home/Overview API
 export const homeApi = {
   // Get all home data
@@ -723,4 +807,5 @@ export const api = {
   aboutUs: aboutUsApi,
   categories: categoriesApi,
   workTypes: workTypesApi,
+  servicePrice: servicePriceApi,
 };
