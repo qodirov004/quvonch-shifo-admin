@@ -31,6 +31,11 @@ export default function DashboardOverview() {
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
   const [allCallOrdersData, setAllCallOrdersData] = useState<any[]>([])
+  
+  // Job applications date filter state
+  const [appStartDate, setAppStartDate] = useState<string>("")
+  const [appEndDate, setAppEndDate] = useState<string>("")
+  const [allJobApplicationsData, setAllJobApplicationsData] = useState<any[]>([])
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -64,6 +69,9 @@ export default function DashboardOverview() {
 
         // Store all call orders data for filtering
         setAllCallOrdersData(callOrdersData.results || [])
+        
+        // Store all job applications data for filtering
+        setAllJobApplicationsData(jobApplicationsData.results || [])
         
         // Generate chart data
         let callOrdersChartData = generateCallOrdersChartData(callOrdersData.results || [], "", "")
@@ -217,6 +225,57 @@ export default function DashboardOverview() {
     setChartData(prev => ({
       ...prev,
       callOrdersByMonth: chartData
+    }))
+  }
+
+  // Filter job applications by dates
+  const filterJobApplicationsByDates = (applications: any[], start: string, end: string) => {
+    if (!start && !end) return applications
+    
+    return applications.filter(app => {
+      if (!app.created_at) return false
+      const appDate = new Date(app.created_at)
+      const appDateStr = appDate.toISOString().split('T')[0] // YYYY-MM-DD format
+      
+      // Agar faqat start berilgan bo'lsa
+      if (start && !end) {
+        return appDateStr >= start
+      }
+      
+      // Agar faqat end berilgan bo'lsa
+      if (!start && end) {
+        return appDateStr <= end
+      }
+      
+      // Agar ikkalasi ham berilgan bo'lsa
+      if (start && end) {
+        return appDateStr >= start && appDateStr <= end
+      }
+      
+      return true
+    })
+  }
+
+  // Filter button handler for job applications
+  const handleApplicationsFilter = () => {
+    if (allJobApplicationsData.length > 0) {
+      const filtered = filterJobApplicationsByDates(allJobApplicationsData, appStartDate, appEndDate)
+      const chartData = generateApplicationsChartData(filtered)
+      setChartData(prev => ({
+        ...prev,
+        applicationsByStatus: chartData
+      }))
+    }
+  }
+
+  // Clear filter button handler for job applications
+  const handleClearApplicationsFilter = () => {
+    setAppStartDate("")
+    setAppEndDate("")
+    const chartData = generateApplicationsChartData(allJobApplicationsData)
+    setChartData(prev => ({
+      ...prev,
+      applicationsByStatus: chartData
     }))
   }
 
@@ -624,24 +683,152 @@ export default function DashboardOverview() {
 
 
         {/* Job Applications Chart */}
-        <PieChartTemplate
-          title="Ish arizalari"
-          description="Status bo'yicha ish arizalari taqsimlash"
-          data={chartData.applicationsByStatus.map((item, index) => ({
-            name: item.label,
-            value: item.count,
-            fill:
-              item.label === "Kutilmoqda"
-                ? "hsl(45, 70%, 50%)"
-                : item.label === "Ko'rib chiqilgan"
-                  ? "hsl(200, 70%, 50%)"
-                  : item.label === "Qabul qilingan"
-                    ? "hsl(120, 70%, 50%)"
-                    : item.label === "Rad etilgan"
-                      ? "hsl(0, 70%, 50%)"
-                      : `hsl(${index * 90}, 70%, 50%)`,
-          }))}
-        />
+        <Card className="w-full">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Ish arizalari</CardTitle>
+                <CardDescription>Status bo'yicha ish arizalari taqsimlash</CardDescription>
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex gap-2">
+                    <div>
+                      <Label htmlFor="appStartDate">Boshlanish sanasi</Label>
+                      <Input
+                        id="appStartDate"
+                        type="date"
+                        value={appStartDate}
+                        onChange={(e) => setAppStartDate(e.target.value)}
+                        className="w-[150px]"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="appEndDate">Tugash sanasi</Label>
+                      <Input
+                        id="appEndDate"
+                        type="date"
+                        value={appEndDate}
+                        onChange={(e) => setAppEndDate(e.target.value)}
+                        className="w-[150px]"
+                      />
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <Button onClick={handleApplicationsFilter} className="h-10">
+                        Filter
+                      </Button>
+                      {(appStartDate || appEndDate) && (
+                        <Button variant="outline" onClick={handleClearApplicationsFilter} className="h-10">
+                          <X className="w-4 h-4 mr-2" />
+                          Tozalash
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Check if no data */}
+            {chartData.applicationsByStatus.length === 0 || chartData.applicationsByStatus.every(item => item.count === 0) ? (
+              <div className="h-[450px] flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
+                  <Briefcase className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {(appStartDate || appEndDate) 
+                      ? "Tanlangan sana oralig'ida ish arizalari yo'q"
+                      : "Ish arizalari yo'q"
+                    }
+                  </h3>
+                  <p className="text-muted-foreground max-w-md">
+                    {(appStartDate || appEndDate) 
+                      ? "Tanlangan sana oralig'ida hech qanday ish arizasi qabul qilinmagan. Boshqa sana oralig'ini sinab ko'ring."
+                      : "Hozircha hech qanday ish arizasi qabul qilinmagan. Ma'lumotlar kelganda grafik avtomatik ravishda yangilanadi."
+                    }
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ChartContainer
+                config={chartData.applicationsByStatus.reduce(
+                  (acc, item, index) => {
+                    acc[item.label] = {
+                      label: item.label,
+                      color: item.label === "Kutilmoqda"
+                        ? "hsl(45, 70%, 50%)"
+                        : item.label === "Ko'rib chiqilgan"
+                          ? "hsl(200, 70%, 50%)"
+                          : item.label === "Qabul qilingan"
+                            ? "hsl(120, 70%, 50%)"
+                            : item.label === "Rad etilgan"
+                              ? "hsl(0, 70%, 50%)"
+                              : `hsl(${index * 90}, 70%, 50%)`,
+                    }
+                    return acc
+                  },
+                  {} as Record<string, { label: string; color: string }>,
+                )}
+                className="h-[450px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          className="text-lg font-medium"
+                          formatter={(value, name) => {
+                            return [`${name} `, `: ${value} ta`]
+                          }}
+                        />
+                      }
+                    />
+                    <Pie
+                      data={chartData.applicationsByStatus.filter(item => item.count > 0).map((item, index) => ({
+                        name: item.label,
+                        value: item.count,
+                        fill: item.label === "Kutilmoqda"
+                          ? "hsl(45, 70%, 50%)"
+                          : item.label === "Ko'rib chiqilgan"
+                            ? "hsl(200, 70%, 50%)"
+                            : item.label === "Qabul qilingan"
+                              ? "hsl(120, 70%, 50%)"
+                              : item.label === "Rad etilgan"
+                                ? "hsl(0, 70%, 50%)"
+                                : `hsl(${index * 90}, 70%, 50%)`,
+                      }))}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name} - ${value} ta`}
+                      outerRadius={140}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {chartData.applicationsByStatus.filter(item => item.count > 0).map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.label === "Kutilmoqda"
+                            ? "hsl(45, 70%, 50%)"
+                            : entry.label === "Ko'rib chiqilgan"
+                              ? "hsl(200, 70%, 50%)"
+                              : entry.label === "Qabul qilingan"
+                                ? "hsl(120, 70%, 50%)"
+                                : entry.label === "Rad etilgan"
+                                  ? "hsl(0, 70%, 50%)"
+                                  : `hsl(${index * 90}, 70%, 50%)`}
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Activity */}
