@@ -57,9 +57,9 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose?
     >
       <div className="p-3 sm:p-4 lg:p-6">
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <div className="flex items-center justify-center mb-2">
+          <div className="flex items-center justify-center mb-2 rounded-xl bg-[#e6f0ff] p-2.5 shadow-sm border border-border">
             <img
-              src="/05-100.jpg"
+              src="/05-100.png"
               alt="Quvonch Shifo"
               className="h-24 sm:h-20 lg:h-28 w-auto object-contain"
             />
