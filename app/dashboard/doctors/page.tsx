@@ -390,8 +390,11 @@ export default function DoctorsPage() {
                 <Input
                   id="experience"
                   type="number"
-                  value={formData.experience}
-                  onChange={(e) => setFormData({ ...formData, experience: Number.parseInt(e.target.value) || 0 })}
+                  value={formData.experience === 0 ? "" : formData.experience || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, experience: value === "" ? 0 : Number.parseInt(value) || 0 });
+                  }}
                   placeholder="0"
                 />
               </div>
@@ -608,8 +611,11 @@ export default function DoctorsPage() {
               <Input
                 id="edit_experience"
                 type="number"
-                value={formData.experience}
-                onChange={(e) => setFormData({ ...formData, experience: Number.parseInt(e.target.value) || 0 })}
+                value={formData.experience === 0 ? "" : formData.experience || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData({ ...formData, experience: value === "" ? 0 : Number.parseInt(value) || 0 });
+                }}
                 placeholder="0"
               />
             </div>

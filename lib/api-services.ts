@@ -22,7 +22,9 @@ import type {
   WorkType,
   WorkTypeLanguage,
   ServicePrice,
-  ServicePriceLanguage
+  ServicePriceLanguage,
+  Service,
+  ServiceLanguage
 } from './types';
 
 // API Base URL
@@ -800,6 +802,102 @@ export const authApi = {
   },
 };
 
+// Services API
+export const servicesApi = {
+  // Get all services with pagination and search
+  getAll: async (params?: {
+    search?: string;
+    ordering?: string;
+    page?: number;
+    lang?: Language;
+  }): Promise<PaginatedResponse<ServiceLanguage>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.ordering) searchParams.append('ordering', params.ordering);
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.lang) searchParams.append('lang', params.lang);
+    
+    const query = searchParams.toString();
+    return apiGet(`/services/${query ? `?${query}` : ''}`);
+  },
+
+  // Get single service
+  getById: async (id: number): Promise<ServiceLanguage> => {
+    return apiGet(`/services/${id}/`);
+  },
+
+  // Create new service
+  create: async (data: Service): Promise<Service> => {
+    return apiPost('/services/', data);
+  },
+
+  // Create new service with image
+  createWithImage: async (formData: FormData): Promise<Service> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+    
+    const response = await fetch(`${API_BASE}/services/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+
+  // Update service
+  update: async (id: number, data: Service): Promise<Service> => {
+    const response = await apiCall(`/services/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  // Update service with image
+  updateWithImage: async (id: number, formData: FormData): Promise<Service> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+    
+    const response = await fetch(`${API_BASE}/services/${id}/`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+
+  // Partial update service
+  partialUpdate: async (id: number, data: Partial<Service>): Promise<Service> => {
+    const response = await apiCall(`/services/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+
+  // Delete service
+  delete: async (id: number): Promise<void> => {
+    const response = await apiCall(`/services/${id}/`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+  },
+};
+
 // Combined API object for easy imports
 export const api = {
   auth: authApi,
@@ -813,4 +911,5 @@ export const api = {
   categories: categoriesApi,
   workTypes: workTypesApi,
   servicePrice: servicePriceApi,
+  services: servicesApi,
 };

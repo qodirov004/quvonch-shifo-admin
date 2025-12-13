@@ -317,8 +317,11 @@ export default function ServicePricePage() {
                   type="number"
                   min="0"
                   step="1000"
-                  value={formData.price || 0}
-                  onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
+                  value={formData.price === 0 ? "" : formData.price || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({...formData, price: value === "" ? 0 : Number.parseFloat(value) || 0});
+                  }}
                   placeholder="Narx"
                 />
               </div>
@@ -512,8 +515,11 @@ export default function ServicePricePage() {
                 type="number"
                 min="0"
                 step="1000"
-                value={formData.price || 0}
-                onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
+                value={formData.price === 0 ? "" : formData.price || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData({...formData, price: value === "" ? 0 : Number.parseFloat(value) || 0});
+                }}
                 placeholder="Narx"
               />
             </div>
