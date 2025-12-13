@@ -26,6 +26,7 @@ export default function ServicesPage() {
   const [filteredServices, setFilteredServices] = useState<ServiceLanguage[]>([])
   const [pageLoading, setPageLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [mounted, setMounted] = useState(false)
 
   // Modal states
@@ -61,15 +62,22 @@ export default function ServicesPage() {
   }, [token, isAuthenticated])
 
   useEffect(() => {
-    const filtered = services.filter(
-      (service) =>
+    const filtered = services.filter((service) => {
+      // Search filter
+      const matchesSearch =
+        !searchTerm ||
         service.type_uz.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.type_ru.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.category_uz.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        service.category_ru.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+        service.category_ru.toLowerCase().includes(searchTerm.toLowerCase())
+
+      // Category filter
+      const matchesCategory = categoryFilter === "all" || service.category_uz === categoryFilter
+
+      return matchesSearch && matchesCategory
+    })
     setFilteredServices(filtered)
-  }, [searchTerm, services])
+  }, [searchTerm, categoryFilter, services])
 
   const fetchServices = async () => {
     try {
@@ -224,18 +232,37 @@ export default function ServicesPage() {
                 size="sm"
                 onClick={() => setSearchTerm("")}
                 className="absolute right-1 top-1 h-8 w-8 p-0 hover:bg-muted"
-                title="Filterni tozalash"
+                title="Qidiruvni tozalash"
               >
                 <X className="h-4 w-4" />
               </Button>
             )}
           </div>
-          {searchTerm && (
+          <Select
+            value={categoryFilter}
+            onValueChange={(value) => setCategoryFilter(value)}
+          >
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Kategoriya bo'yicha filtrlash" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Barcha kategoriyalar</SelectItem>
+              {choicesUz.map((choice) => (
+                <SelectItem key={choice.value} value={choice.value}>
+                  {choice.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(searchTerm || categoryFilter !== "all") && (
             <Button
               variant="outline"
-              onClick={() => setSearchTerm("")}
+              onClick={() => {
+                setSearchTerm("")
+                setCategoryFilter("all")
+              }}
               className="w-full sm:w-auto"
-              title="Filterni tozalash"
+              title="Barcha filtrlarni tozalash"
             >
               <X className="w-4 h-4 mr-2" />
               Tozalash
