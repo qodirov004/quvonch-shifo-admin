@@ -261,21 +261,13 @@ export interface ServiceLanguage {
 
 // Service Choices
 export const SERVICE_CHOICES_UZ = [
-  { value: "doktor qabuliga yozilish", label: "Doktor Qabuliga Yozilish" },
   { value: "UTT", label: "Ultra Tovush Tekshiruvi" },
   { value: "analiz topshirish", label: "Analiz Topshirish" },
-  { value: "tibbiy ko'rik", label: "Tibbiy Ko'rik" },
-  { value: "fibroscan", label: "FibroScan Yordamida Jigarni Tekshirish" },
-  { value: "funksional diagnostika", label: "Funksional Diagnostika" },
   { value: "nevrologiya", label: "Nevrologiya" },
 ]
 
 export const SERVICE_CHOICES_RU = [
-  { value: "doktor qabuliga yozilish", label: "Запись на прием к врачу" },
   { value: "UTT", label: "Ультразвуковое исследование" },
   { value: "analiz topshirish", label: "Сдача анализов" },
-  { value: "tibbiy ko'rik", label: "Медицинский осмотр" },
-  { value: "fibroscan", label: "Обследование печени с помощью FibroScan" },
-  { value: "funksional diagnostika", label: "Функциональная диагностика" },
   { value: "nevrologiya", label: "Неврология" },
 ]
