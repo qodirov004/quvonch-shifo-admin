@@ -16,14 +16,15 @@ import { Trash2, Search, Plus, Edit, Eye, X } from "lucide-react"
 import { Modal } from "@/components/ui/modal"
 import DashboardLayout from "@/components/dashboard/layout"
 import { api } from "@/lib/api-services"
-import type { ServiceLanguage, Service } from "@/lib/types"
-import { SERVICE_CHOICES_UZ as choicesUz, SERVICE_CHOICES_RU as choicesRu } from "@/lib/types"
+import type { ServiceLanguage, Service, ServiceChoice } from "@/lib/types"
 
 export default function ServicesPage() {
   const router = useRouter()
   const { user, token, loading, isAuthenticated } = useAuth()
   const [services, setServices] = useState<ServiceLanguage[]>([])
   const [filteredServices, setFilteredServices] = useState<ServiceLanguage[]>([])
+  const [choicesUz, setChoicesUz] = useState<ServiceChoice[]>([])
+  const [choicesRu, setChoicesRu] = useState<ServiceChoice[]>([])
   const [pageLoading, setPageLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
@@ -58,6 +59,7 @@ export default function ServicesPage() {
   useEffect(() => {
     if (token && isAuthenticated) {
       fetchServices()
+      fetchChoices()
     }
   }, [token, isAuthenticated])
 
@@ -90,6 +92,21 @@ export default function ServicesPage() {
       setServices([])
     } finally {
       setPageLoading(false)
+    }
+  }
+
+  const fetchChoices = async () => {
+    try {
+      console.log("Fetching service choices...")
+      const choices = await api.services.getChoices()
+      console.log("Service choices:", choices)
+      setChoicesUz(choices.uz || [])
+      setChoicesRu(choices.ru || [])
+    } catch (error) {
+      console.error("Failed to fetch choices:", error)
+      // Fallback to empty arrays if API fails
+      setChoicesUz([])
+      setChoicesRu([])
     }
   }
 

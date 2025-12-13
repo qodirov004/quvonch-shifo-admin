@@ -24,7 +24,9 @@ import type {
   ServicePrice,
   ServicePriceLanguage,
   Service,
-  ServiceLanguage
+  ServiceLanguage,
+  ServiceChoice,
+  ServiceChoicesResponse
 } from './types';
 
 // API Base URL
@@ -804,6 +806,33 @@ export const authApi = {
 
 // Services API
 export const servicesApi = {
+  // Get service choices from API
+  getChoices: async (): Promise<ServiceChoicesResponse> => {
+    try {
+      // Try /services/choices/ endpoint first
+      return await apiGet('/services/choices/');
+    } catch (error) {
+      // Fallback: try to get from services endpoint metadata
+      try {
+        const response = await apiCall('/services/', { method: 'OPTIONS' });
+        if (response.ok) {
+          const data = await response.json();
+          // Extract choices from API metadata if available
+          if (data.actions?.post?.category_uz?.choices) {
+            return {
+              uz: data.actions.post.category_uz.choices,
+              ru: data.actions.post.category_ru?.choices || [],
+            };
+          }
+        }
+      } catch (e) {
+        console.error('Failed to get choices from OPTIONS:', e);
+      }
+      // If all fails, return empty arrays
+      return { uz: [], ru: [] };
+    }
+  },
+
   // Get all services with pagination and search
   getAll: async (params?: {
     search?: string;

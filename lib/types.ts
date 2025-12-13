@@ -259,15 +259,14 @@ export interface ServiceLanguage {
   created_at: string;
 }
 
-// Service Choices
-export const SERVICE_CHOICES_UZ = [
-  { value: "UTT", label: "Ultra Tovush Tekshiruvi" },
-  { value: "analiz topshirish", label: "Analiz Topshirish" },
-  { value: "nevrologiya", label: "Nevrologiya" },
-]
+// Service Choice type
+export interface ServiceChoice {
+  value: string;
+  label: string;
+}
 
-export const SERVICE_CHOICES_RU = [
-  { value: "UTT", label: "Ультразвуковое исследование" },
-  { value: "analiz topshirish", label: "Сдача анализов" },
-  { value: "nevrologiya", label: "Неврология" },
-]
+// Service Choices Response
+export interface ServiceChoicesResponse {
+  uz: ServiceChoice[];
+  ru: ServiceChoice[];
+}
