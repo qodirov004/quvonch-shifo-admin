@@ -270,3 +270,16 @@ export interface ServiceChoicesResponse {
   uz: ServiceChoice[];
   ru: ServiceChoice[];
 }
+
+// Default Service Choices (fallback if API doesn't provide)
+export const DEFAULT_SERVICE_CHOICES_UZ: ServiceChoice[] = [
+  { value: "UTT", label: "Ultra Tovush Tekshiruvi" },
+  { value: "analiz topshirish", label: "Analiz Topshirish" },
+  { value: "nevrologiya", label: "Nevrologiya" },
+]
+
+export const DEFAULT_SERVICE_CHOICES_RU: ServiceChoice[] = [
+  { value: "UTT", label: "Ультразвуковое исследование" },
+  { value: "analiz topshirish", label: "Сдача анализов" },
+  { value: "nevrologiya", label: "Неврология" },
+]

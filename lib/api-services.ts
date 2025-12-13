@@ -28,6 +28,7 @@ import type {
   ServiceChoice,
   ServiceChoicesResponse
 } from './types';
+import { DEFAULT_SERVICE_CHOICES_UZ, DEFAULT_SERVICE_CHOICES_RU } from './types';
 
 // API Base URL
 const API_BASE = 'https://api.greentraver.uz';
@@ -810,8 +811,14 @@ export const servicesApi = {
   getChoices: async (): Promise<ServiceChoicesResponse> => {
     try {
       // Try /services/choices/ endpoint first
-      return await apiGet('/services/choices/');
+      const response = await apiGet('/services/choices/');
+      // Check if response has valid data
+      if (response && (response.uz?.length > 0 || response.ru?.length > 0)) {
+        return response;
+      }
+      throw new Error('Empty choices from API');
     } catch (error) {
+      console.warn('Failed to get choices from /services/choices/, trying OPTIONS:', error);
       // Fallback: try to get from services endpoint metadata
       try {
         const response = await apiCall('/services/', { method: 'OPTIONS' });
@@ -826,10 +833,14 @@ export const servicesApi = {
           }
         }
       } catch (e) {
-        console.error('Failed to get choices from OPTIONS:', e);
+        console.warn('Failed to get choices from OPTIONS:', e);
       }
-      // If all fails, return empty arrays
-      return { uz: [], ru: [] };
+      // If all fails, return default hardcoded choices
+      console.log('Using default hardcoded choices');
+      return { 
+        uz: DEFAULT_SERVICE_CHOICES_UZ, 
+        ru: DEFAULT_SERVICE_CHOICES_RU 
+      };
     }
   },
 

@@ -17,14 +17,15 @@ import { Modal } from "@/components/ui/modal"
 import DashboardLayout from "@/components/dashboard/layout"
 import { api } from "@/lib/api-services"
 import type { ServiceLanguage, Service, ServiceChoice } from "@/lib/types"
+import { DEFAULT_SERVICE_CHOICES_UZ, DEFAULT_SERVICE_CHOICES_RU } from "@/lib/types"
 
 export default function ServicesPage() {
   const router = useRouter()
   const { user, token, loading, isAuthenticated } = useAuth()
   const [services, setServices] = useState<ServiceLanguage[]>([])
   const [filteredServices, setFilteredServices] = useState<ServiceLanguage[]>([])
-  const [choicesUz, setChoicesUz] = useState<ServiceChoice[]>([])
-  const [choicesRu, setChoicesRu] = useState<ServiceChoice[]>([])
+  const [choicesUz, setChoicesUz] = useState<ServiceChoice[]>(DEFAULT_SERVICE_CHOICES_UZ)
+  const [choicesRu, setChoicesRu] = useState<ServiceChoice[]>(DEFAULT_SERVICE_CHOICES_RU)
   const [pageLoading, setPageLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
@@ -100,13 +101,14 @@ export default function ServicesPage() {
       console.log("Fetching service choices...")
       const choices = await api.services.getChoices()
       console.log("Service choices:", choices)
-      setChoicesUz(choices.uz || [])
-      setChoicesRu(choices.ru || [])
+      // Use API choices if available, otherwise use defaults
+      setChoicesUz(choices.uz && choices.uz.length > 0 ? choices.uz : DEFAULT_SERVICE_CHOICES_UZ)
+      setChoicesRu(choices.ru && choices.ru.length > 0 ? choices.ru : DEFAULT_SERVICE_CHOICES_RU)
     } catch (error) {
       console.error("Failed to fetch choices:", error)
-      // Fallback to empty arrays if API fails
-      setChoicesUz([])
-      setChoicesRu([])
+      // Fallback to default choices if API fails
+      setChoicesUz(DEFAULT_SERVICE_CHOICES_UZ)
+      setChoicesRu(DEFAULT_SERVICE_CHOICES_RU)
     }
   }
 
