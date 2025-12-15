@@ -83,11 +83,34 @@ export default function ServicesPage() {
   }, [searchTerm, categoryFilter, services])
 
   const fetchServices = async () => {
+    setPageLoading(true)
     try {
-      console.log("Fetching services...")
-      const data = await api.services.getAll({ page: 1, lang: "uz" })
-      console.log("Services data:", data)
-      setServices(data.results || [])
+      console.log("Fetching services (all pages)...")
+      const allServices: ServiceLanguage[] = []
+      let page = 1
+      let hasNext = true
+
+      while (hasNext) {
+        const data = await api.services.getAll({ page, lang: "uz" })
+        if (data?.results?.length) {
+          allServices.push(...data.results)
+        }
+
+        // Detect next page
+        if (data?.next) {
+          try {
+            const nextUrl = new URL(data.next)
+            const nextPage = nextUrl.searchParams.get("page")
+            page = nextPage ? Number.parseInt(nextPage, 10) : page + 1
+          } catch (e) {
+            page += 1
+          }
+        } else {
+          hasNext = false
+        }
+      }
+
+      setServices(allServices)
     } catch (error) {
       console.error("Failed to fetch services:", error)
       setServices([])
