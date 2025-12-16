@@ -1,10 +1,13 @@
 // API Types based on Swagger documentation
 
+export type CallOrderStatus = 'pending' | 'connected' | 'not_connected';
+
 export interface CallOrder {
   id?: number;
   name_uz: string;
   name_ru: string;
   phone: string;
+  status?: CallOrderStatus;
   created_at?: string;
 }
 
@@ -14,6 +17,7 @@ export interface CallOrderLanguage {
   name_uz: string;
   name_ru: string;
   phone: string;
+  status?: CallOrderStatus;
   created_at: string;
 }
 

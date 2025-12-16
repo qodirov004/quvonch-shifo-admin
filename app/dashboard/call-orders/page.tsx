@@ -9,11 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Trash2, Search, Plus, Edit, Eye, X } from "lucide-react"
+import { Trash2, Search, Plus, Edit, Eye, X, Loader2 } from "lucide-react"
 import { Modal } from "@/components/ui/modal"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DashboardLayout from "@/components/dashboard/layout"
 import { api } from "@/lib/api-services"
-import type { CallOrderLanguage, CallOrder } from "@/lib/types"
+import type { CallOrderLanguage, CallOrder, CallOrderStatus } from "@/lib/types"
 
 export default function CallOrdersPage() {
   const router = useRouter()
@@ -24,6 +26,8 @@ export default function CallOrdersPage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<CallOrderStatus | "all">("all")
+  const [statusUpdatingId, setStatusUpdatingId] = useState<number | null>(null)
   
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -35,9 +39,24 @@ export default function CallOrdersPage() {
   const [formData, setFormData] = useState<Partial<CallOrder>>({
     name_uz: "",
     name_ru: "",
-    phone: ""
+    phone: "",
+    status: "pending",
   })
   const [formLoading, setFormLoading] = useState(false)
+
+  const statusLabels: Record<CallOrderStatus, string> = {
+    pending: "Kutilmoqda",
+    connected: "Bog'lanildi",
+    not_connected: "Bog'lanilmadi",
+  }
+  const getStatusLabel = (status?: string) =>
+    statusLabels[(status as CallOrderStatus) || "pending"] ?? statusLabels.pending
+  const getStatusClass = (status?: string) => {
+    const val = (status as CallOrderStatus) || "pending"
+    if (val === "connected") return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-100 dark:border-green-700/60"
+    if (val === "not_connected") return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-100 dark:border-red-700/60"
+    return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700/60"
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -56,11 +75,17 @@ export default function CallOrdersPage() {
   }, [token, isAuthenticated])
 
   useEffect(() => {
-    const filtered = callOrders.filter(
-      (order) => order.name.toLowerCase().includes(searchTerm.toLowerCase()) || order.phone.includes(searchTerm),
-    )
+    const filtered = callOrders.filter((order) => {
+      const matchesSearch =
+        order.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.phone.includes(searchTerm)
+      const matchesStatus =
+        statusFilter === "all" ||
+        (order.status ?? "pending") === statusFilter
+      return matchesSearch && matchesStatus
+    })
     setFilteredOrders(filtered)
-  }, [searchTerm, callOrders])
+  }, [searchTerm, statusFilter, callOrders])
 
   const fetchCallOrders = async () => {
     try {
@@ -133,11 +158,31 @@ export default function CallOrdersPage() {
     }
   }
 
+  const handleStatusChange = async (orderId: number, status: CallOrderStatus) => {
+    setStatusUpdatingId(orderId)
+    try {
+      await api.callOrders.partialUpdate(orderId, { status })
+      // Update local state optimistically
+      setCallOrders((prev) =>
+        prev.map((item) => (item.id === orderId ? { ...item, status } : item)),
+      )
+      setFilteredOrders((prev) =>
+        prev.map((item) => (item.id === orderId ? { ...item, status } : item)),
+      )
+    } catch (error) {
+      console.error("Failed to update status:", error)
+      alert("Statusni yangilashda xatolik. Qayta urinib ko'ring.")
+    } finally {
+      setStatusUpdatingId(null)
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       name_uz: "",
       name_ru: "",
-      phone: ""
+      phone: "",
+      status: "pending",
     })
   }
 
@@ -146,7 +191,8 @@ export default function CallOrdersPage() {
     setFormData({
       name_uz: order.name_uz || order.name || "",
       name_ru: order.name_ru || "",
-      phone: order.phone
+      phone: order.phone,
+      status: order.status || "pending",
     })
     setIsEditModalOpen(true)
   }
@@ -175,7 +221,7 @@ export default function CallOrdersPage() {
           <p className="text-muted-foreground text-sm sm:text-base">Mijozlarning qo'ng'iroq so'rovlarini boshqarish</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
@@ -207,6 +253,22 @@ export default function CallOrdersPage() {
               Tozalash
             </Button>
           )}
+          <div className="w-full sm:w-40">
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value as CallOrderStatus | "all")}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Status bo'yicha filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Barcha statuslar</SelectItem>
+                <SelectItem value="pending">Kutilmoqda</SelectItem>
+                <SelectItem value="connected">Bog'lanildi</SelectItem>
+                <SelectItem value="not_connected">Bog'lanilmadi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Modal
             title="Yangi Qo'ng'iroq Buyurtmasi"
             trigger={
@@ -249,6 +311,22 @@ export default function CallOrdersPage() {
                   placeholder="+998 90 123 45 67"
                 />
               </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status || "pending"}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as CallOrderStatus })}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Statusni tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Kutilmoqda</SelectItem>
+                    <SelectItem value="connected">Bog'lanildi</SelectItem>
+                    <SelectItem value="not_connected">Bog'lanilmadi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
@@ -282,6 +360,7 @@ export default function CallOrdersPage() {
                       <th className="text-left py-3 px-2 sm:px-4 text-foreground font-semibold">Ism</th>
                       <th className="text-left py-3 px-2 sm:px-4 text-foreground font-semibold">Telefon</th>
                       <th className="text-left py-3 px-2 sm:px-4 text-foreground font-semibold hidden sm:table-cell">Yaratilgan sana</th>
+                      <th className="text-left py-3 px-2 sm:px-4 text-foreground font-semibold">Status</th>
                       <th className="text-center py-3 px-2 sm:px-4 text-foreground font-semibold">Amallar</th>
                     </tr>
                   </thead>
@@ -311,6 +390,32 @@ export default function CallOrdersPage() {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
+                          </td>
+                          <td className="py-3 px-2 sm:px-4">
+                            <Select
+                              value={(order.status || "pending") as CallOrderStatus}
+                              onValueChange={(value) => handleStatusChange(order.id, value as CallOrderStatus)}
+                              disabled={statusUpdatingId === order.id}
+                            >
+                              <SelectTrigger className="w-[170px] sm:w-[160px]">
+                                <SelectValue className="text-sm sm:text-base">
+                                  <div className="flex items-center gap-2 justify-center sm:justify-start">
+                                    {statusUpdatingId === order.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                    <Badge
+                                      variant="outline"
+                                      className={`${getStatusClass(order.status)} text-[13px] sm:text-[14px] font-semibold px-2.5 py-1`}
+                                    >
+                                      {getStatusLabel(order.status)}
+                                    </Badge>
+                                  </div>
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Kutilmoqda</SelectItem>
+                                <SelectItem value="connected">Bog'lanildi</SelectItem>
+                                <SelectItem value="not_connected">Bog'lanilmadi</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </td>
                           <td className="py-3 px-2 sm:px-4 text-center">
                             <div className="flex gap-1 justify-center">
@@ -390,6 +495,22 @@ export default function CallOrdersPage() {
                 placeholder="+998 90 123 45 67"
               />
             </div>
+            <div>
+              <Label htmlFor="edit_status">Status</Label>
+              <Select
+                value={formData.status || "pending"}
+                onValueChange={(value) => setFormData({ ...formData, status: value as CallOrderStatus })}
+              >
+                <SelectTrigger id="edit_status">
+                  <SelectValue placeholder="Statusni tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Kutilmoqda</SelectItem>
+                  <SelectItem value="connected">Bog'lanildi</SelectItem>
+                  <SelectItem value="not_connected">Bog'lanilmadi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
@@ -431,6 +552,17 @@ export default function CallOrdersPage() {
                     {selectedOrder.name_ru || '—'}
                   </p>
                 </div>
+                <div>
+                  <Label className="text-sm font-semibold">Status</Label>
+                  <div className="mt-1">
+                    <Badge
+                      variant="outline"
+                      className={`${getStatusClass(selectedOrder.status)} text-[13px] sm:text-[14px] font-semibold px-2.5 py-1`}
+                    >
+                      {getStatusLabel(selectedOrder.status)}
+                    </Badge>
+                  </div>
+                </div>
                 <div className="sm:col-span-2">
                   <Label className="text-sm font-semibold">Yaratilgan sana</Label>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -451,6 +583,15 @@ export default function CallOrdersPage() {
                 <div className="text-xs text-muted-foreground mt-1 space-y-1">
                   <p>• ID: #{selectedOrder.id}</p>
                   <p>• Telefon: {selectedOrder.phone}</p>
+                  <p className="flex items-center gap-2">
+                    • Status:
+                    <Badge
+                      variant="outline"
+                      className={`${getStatusClass(selectedOrder.status)} text-[13px] sm:text-[14px] font-semibold px-2.5 py-1`}
+                    >
+                      {getStatusLabel(selectedOrder.status)}
+                    </Badge>
+                  </p>
                   <p>• O'zbek ismi: {selectedOrder.name_uz || selectedOrder.name || 'Kiritilmagan'}</p>
                   <p>• Rus ismi: {selectedOrder.name_ru || 'Kiritilmagan'}</p>
                   <p>• Yaratilgan: {new Date(selectedOrder.created_at).toLocaleDateString('uz-UZ')}</p>
