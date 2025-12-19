@@ -11,7 +11,7 @@ const menuItems = [
   { href: "/dashboard/news", label: "Yangiliklar", icon: "newspaper" },
   { href: "/dashboard/vacancies", label: "Vakansiyalar", icon: "briefcase" },
   { href: "/dashboard/services", label: "Xizmatlar", icon: "settings" },
-  { href: "/dashboard/service-price", label: "Xizmat narxlari", icon: "dollar" },
+  { href: "/dashboard/service-price", label: "Konsultatsiya narxlari", icon: "dollar" },
   { href: "/dashboard/categories", label: "Kategoriyalar", icon: "tag" },
   { href: "/dashboard/work-types", label: "Ish turlari", icon: "wrench" },
   { href: "/dashboard/job-applications", label: "Ish arizalari", icon: "file-text" },
